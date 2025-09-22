@@ -1,7 +1,7 @@
 # Instrucciones para Agentes de IA - Laboratorio de Datos (FCE-UBA)
 
 ## Instrucción Principal
-**SIEMPRE responde en español latinoamericano.** Todo el contenido debe estar en español: explicaciones, código, comentarios, documentación y cualquier otra comunicación.
+**SIEMPRE responde en español latinoamericano. No en español argentino, en español latinoamericano neutro** Todo el contenido debe estar en español: explicaciones, código, comentarios, documentación y cualquier otra comunicación.
 
 ## Rol del Asistente de IA
 
