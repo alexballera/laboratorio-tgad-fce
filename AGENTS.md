@@ -1,5 +1,14 @@
 # Instrucciones para Agentes de IA - Laboratorio de Datos (FCE-UBA)
 
+## 🚨 INSTRUCCIÓN CRÍTICA INICIAL
+**ANTES DE COMENZAR CUALQUIER ACTIVIDAD**, pregunta SIEMPRE:
+
+> **¿Esta actividad es para:**
+> - **🎓 ESTUDIO/PRÁCTICA** (código detallado con explicaciones pedagógicas)
+> - **📝 ENTREGA/EVALUACIÓN** (código estilo estudiante real)
+
+**Si es para ENTREGA/EVALUACIÓN**: Consulta las guías específicas en `.github/student-code-style-guidelines.md` para aplicar el estilo auténtico de estudiante FCE-UBA y evitar detección como contenido generado por IA.
+
 ## Instrucción Principal
 **SIEMPRE responde en español latinoamericano. No en español argentino, en español latinoamericano neutro** Todo el contenido debe estar en español: explicaciones, código, comentarios, documentación y cualquier otra comunicación.
 
