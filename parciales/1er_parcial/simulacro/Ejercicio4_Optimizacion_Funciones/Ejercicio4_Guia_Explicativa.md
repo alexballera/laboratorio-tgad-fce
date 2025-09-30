@@ -1,103 +1,135 @@
-# Ejercicio 4: Análisis de Funciones de Beneficio - Guía Explicativa (Versión Simplificada)
+# Ejercicio 4: Función de Producción y Derivadas Parciales - Guía Explicativa
 
 ## 📋 Contexto del Ejercicio
 
-El **Ejercicio 4** se enfoca en el análisis de funciones de beneficio de una empresa textil, aplicando conceptos básicos de **optimización** usando Python. Este ejercicio está diseñado para estudiantes de FCE-UBA que están aprendiendo los fundamentos de análisis económico con herramientas computacionales.
+El **Ejercicio 4** se enfoca en el análisis de **funciones de producción Cobb-Douglas** usando derivadas parciales con SymPy. Este ejercicio está diseñado para estudiantes de FCE-UBA que aprenden fundamentos de microeconomía aplicada con herramientas computacionales básicas.
 
 ## 🎯 Objetivos de Aprendizaje
 
-- **Análisis de funciones cuadráticas** en contextos empresariales
-- **Optimización básica** sin uso de derivadas complejas
-- **Interpretación económica** de máximos y mínimos
-- **Visualización de funciones** económicas con matplotlib
-- **Toma de decisiones** basada en análisis cuantitativo
+- **Derivadas parciales** con SymPy (nivel básico)
+- **Evaluación de funciones** en puntos específicos
+- **Análisis de funciones de producción** Cobb-Douglas
+- **Identificación de costos fijos vs variables**
+- **Optimización simple** usando derivadas
 
 ## 📊 Estructura Metodológica
 
-### A. Función de Beneficio Cuadrática
+### Parte a: Función de Producción Cobb-Douglas
 
 #### Modelo Económico
-La función **B(q) = -2q² + 120q - 1000** representa:
+La función **q = x^(1/2) * y^(1/2)** representa:
 
-- **Término cuadrático (-2q²)**: Rendimientos decrecientes (típico en producción)
-- **Término lineal (120q)**: Ingreso marginal inicial
-- **Término constante (-1000)**: Costos fijos
+- **Función Cobb-Douglas**: Forma estándar q = A·x^α·y^β donde α = β = 0.5
+- **Rendimientos constantes a escala**: α + β = 1
+- **Sustitución imperfecta**: Capital y trabajo son complementarios
 
-#### Interpretación Empresarial
+#### Derivadas Parciales
 ```python
-def beneficio(q):
-    return -2*q**2 + 120*q - 1000
+# Productividad marginal del capital
+dq_dx = sp.diff(q, x)  # = √y/(2√x)
+
+# Productividad marginal del trabajo  
+dq_dy = sp.diff(q, y)  # = √x/(2√y)
 ```
 
 **Significado económico:**
-- A medida que se produce más, los beneficios inicialmente crecen
-- Después de cierto punto, comienzan a decrecer (sobreproducción)
-- Existe un punto óptimo que maximiza beneficios
+- **∂q/∂x**: Cuánto aumenta la producción por una unidad adicional de capital
+- **∂q/∂y**: Cuánto aumenta la producción por una unidad adicional de trabajo
 
-### B. Optimización usando Fórmula del Vértice
+### Parte b: Evaluación en Puntos Específicos
 
-#### Metodología Simplificada
-Para funciones cuadráticas **f(x) = ax² + bx + c**, el máximo/mínimo está en:
+#### Metodología de Evaluación
+Para evaluar derivadas en (2,2):
+```python
+dq_dx_en_punto = dq_dx.subs([(x, 2), (y, 2)])
+```
 
-**x = -b/(2a)**
+#### Interpretación en (2,2)
+- **∂q/∂x|(2,2) = 0.5**: Una unidad más de capital aumenta producción en 0.5
+- **∂q/∂y|(2,2) = 0.5**: Una unidad más de trabajo aumenta producción en 0.5
+- **Simetría**: En este punto, ambos insumos tienen igual productividad marginal
 
-En nuestro caso:
-- a = -2, b = 120, c = -1000
-- q* = -120/(2×(-2)) = 30
+### Parte c: Análisis Conceptual de Optimización
 
-#### Ventajas Pedagógicas
-- **Sin derivadas**: Apropiado para nivel introductorio
-- **Fórmula directa**: Fácil de recordar y aplicar
-- **Verificación numérica**: Se puede comprobar probando valores cercanos
+#### Función Objetivo vs Restricción
+- **Función objetivo**: Maximizar q = √(x·y) (maximizar producción)
+- **Restricción**: C = x + 2y + 100 = constante (limitación presupuestaria)
+- **Herramienta**: Análisis básico de derivadas parciales
+- **Punto óptimo**: Combinación que maximiza producción dado el presupuesto
 
-### C. Análisis de Puntos de Equilibrio
+### Parte d: Nueva Función de Costo
 
-#### Resolución de Ecuaciones Cuadráticas
-Para encontrar cuando **B(q) = 0**:
-**-2q² + 120q - 1000 = 0**
+#### d.i: Análisis de Componentes
+**Nueva función**: C = x + 2x² + 100
 
-Dividiendo por -2: **q² - 60q + 500 = 0**
+- **Insumo clave**: Solo capital (x), el trabajo desaparece
+- **Costo fijo**: 100 (independiente de x)
+- **Costo variable**: x + 2x² (lineal + cuadrático)
 
-Usando fórmula cuadrática: **q = [60 ± √(3600-2000)]/2 = [60 ± 40]/2**
+#### d.ii: Optimización de Eficiencia
+**Función objetivo**: Maximizar eficiencia = q/C = √x/(x + 2x² + 100)
 
-**Resultados:** q₁ = 10, q₂ = 50
-
-#### Interpretación Económica
-- **Entre 10 y 50 unidades**: La empresa tiene beneficios positivos
-- **Menos de 10 unidades**: Pérdidas (costos fijos altos)
-- **Más de 50 unidades**: Pérdidas (sobreproducción)
+**Metodología**:
+```python
+d_eficiencia_dx = sp.diff(eficiencia, x)
+puntos_criticos = sp.solve(d_eficiencia_dx, x)
+```
 
 ## 🔧 Herramientas Técnicas Utilizadas
 
-### Librerías Básicas
+### Librerías Principales
 ```python
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import sympy as sp
 ```
 
-**Justificación:** Solo librerías fundamentales, sin herramientas avanzadas como `sympy` o `scipy.optimize`.
+**Justificación de SymPy:** Necesario para cálculos simbólicos de derivadas parciales (similar a sesión 12 del curso).
 
-### Visualización Efectiva
-- **Gráficos de línea**: Para mostrar comportamiento de la función
-- **Marcadores de puntos**: Para identificar valores clave
-- **Anotaciones**: Para facilitar interpretación
+### Funciones Clave
+- **sp.symbols()**: Definir variables simbólicas
+- **sp.diff()**: Calcular derivadas parciales
+- **sp.solve()**: Resolver ecuaciones
+- **sp.subs()**: Evaluar expresiones en puntos específicos
 
-### Análisis de Escenarios
-```python
-datos_resumen = {
-    'Escenario': ['No producir', 'Punto equilibrio 1', 'Producción óptima', 'Punto equilibrio 2'],
-    'Cantidad': [0, 10, 30, 50],
-    'Beneficio': [beneficios correspondientes]
-}
-```
+### Visualización
+- **Gráfico de eficiencia**: Muestra comportamiento de q/C vs capital
+- **Punto óptimo marcado**: Identificación visual del máximo
 
-## 💡 Enfoque Pedagógico
+## 💡 Enfoque Pedagógico FCE-UBA
 
-### Nivel Apropiado para FCE-UBA
-- **Matemática básica**: Álgebra y funciones cuadráticas
-- **Sin cálculo diferencial**: Evita derivadas e integrales
-- **Enfoque práctico**: Soluciones directas y aplicables
+### Nivel Apropiado 
+- **Derivadas parciales básicas**: Nivel sesión 12 del curso
+- **Sin Lagrange**: Evita complicaciones teóricas avanzadas
+- **Enfoque práctico**: Evaluación numérica y interpretación económica
+- **Estilo profesores**: Similar a notebooks de sesiones 9 y 12
+
+### Conexión Curricular
+- **Microeconomía**: Funciones de producción Cobb-Douglas
+- **Matemática aplicada**: Derivadas parciales con SymPy
+- **Optimización**: Conceptos básicos sin herramientas avanzadas
+
+## 🎯 Conexión con Fuentes del Proyecto
+
+### Alineación con Sesiones Teóricas
+- **Sesión 9**: Derivadas y variaciones de funciones organizacionales
+- **Sesión 12**: Optimización de funciones aplicado a la gestión
+- **Metodología**: Similar a notebooks de profesores (funciones básicas, gráficos interpretativos)
+
+## � Criterios de Evaluación
+
+### Competencias Técnicas
+1. **Cálculo de derivadas parciales** con SymPy
+2. **Evaluación de funciones** en puntos específicos
+3. **Interpretación económica** de resultados
+4. **Identificación de componentes** de funciones de costo
+
+### Competencias Analíticas
+1. **Análisis conceptual** de optimización
+2. **Distinción entre costos fijos y variables**
+3. **Interpretación de eficiencia productiva**
+4. **Justificación económica** de resultados óptimos
 - **Interpretación económica**: Cada resultado se explica en términos empresariales
 
 ### Metodología Incremental
