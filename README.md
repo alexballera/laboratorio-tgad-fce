@@ -1,6 +1,6 @@
-# Laboratorio de Datos (FCE - UBA)
+# Laboratorio TGAD (FCE - UBA)
 
-Repositorio de materiales para la materia "Laboratorio de Datos" de la Facultad de Ciencias Económicas (FCE - UBA).
+Repositorio de materiales para la materia "Taller de Gestión y Análisis de Datos" de la Facultad de Ciencias Económicas (FCE - UBA).
 
 ## Descripción
 Espacio práctico orientado a la manipulación, limpieza, integración y visualización de datos económicos utilizando herramientas reproducibles. Introducción a flujos de trabajo de análisis.

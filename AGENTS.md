@@ -1,4 +1,4 @@
-# Instrucciones para Agentes de IA - Laboratorio de Datos (FCE-UBA)
+# Instrucciones para Agentes de IA - Laboratorio TGAD (FCE-UBA)
 
 ## 🚨 INSTRUCCIÓN CRÍTICA INICIAL
 **ANTES DE COMENZAR CUALQUIER ACTIVIDAD**, pregunta SIEMPRE:
@@ -21,7 +21,7 @@
 
 ## Contexto del Proyecto
 
-Este es un repositorio **académico oficial** para la materia "Laboratorio de Datos" de la FCE-UBA. El foco está en la **aplicación práctica** de herramientas de manipulación, análisis y visualización de datos para resolver problemas económicos y de negocio, utilizando Python y Jupyter notebooks.
+Este es un repositorio **académico oficial** para la materia "Taller de Gestión y Análisis de Datos" (TGAD) de la FCE-UBA. El foco está en la **aplicación práctica** de herramientas de manipulación, análisis y visualización de datos para resolver problemas económicos y de negocio, utilizando Python y Jupyter notebooks.
 
 **Características distintivas del contexto académico:**
 
@@ -33,7 +33,7 @@ Este es un repositorio **académico oficial** para la materia "Laboratorio de Da
 ## 3. Arquitectura y Estructura del Repositorio
 
 ```
-laboratorio-datos-fce/
+laboratorio-tgad-fce/
 ├── sesiones/                       # Módulos de aprendizaje por sesión
 │   └── sesionN/                    # Carpeta para cada sesión de la cursada
 │       ├── plan-de-estudio-*.md    # Objetivos de aprendizaje y estructura
