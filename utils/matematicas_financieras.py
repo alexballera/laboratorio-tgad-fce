@@ -69,7 +69,7 @@ def annualized_rate(r: float, m: int) -> float:
 
 # %% Funciones de Valor Presente y Futuro
 
-def present_value(C: Union[float, NDArray], r: Union[float, NDArray], T: Union[int, float, NDArray], m: Union[int, NDArray] = 1) -> Union[float, NDArray]:
+def present_value(C: Union[float, NDArray], r: Union[float, NDArray], T: Union[int, float, NDArray] = 1, m: Union[int, NDArray] = 1) -> Union[float, NDArray]:
     """
     Calcula el valor presente de un monto futuro con capitalización
     Soporta valores individuales y arrays para análisis de sensibilidad
@@ -78,8 +78,9 @@ def present_value(C: Union[float, NDArray], r: Union[float, NDArray], T: Union[i
     Args:
         C: Cash flow futuro (ej: 1000 o [1000, 2000, 3000])
         r: Tasa de interés anual (ej: 0.05 o [0.04, 0.05, 0.06])
-        T: Tiempo en años (ej: 10 o [5, 10, 15])
-        m: Períodos de capitalización por año (ej: 12 o [1, 12, 365])
+        T: Períodos de tiempo completos, usualmente años (ej: 1, 5, 10). 
+           Por defecto T=1. NO usar fracciones como 1/12.
+        m: Frecuencia de capitalización por período T (ej: 1=anual, 12=mensual)
     
     Returns:
         Union[float, NDArray]: Valor presente (escalar o array)
@@ -98,26 +99,33 @@ def present_value(C: Union[float, NDArray], r: Union[float, NDArray], T: Union[i
 
 # %%
 
-def future_value(C: Union[float, NDArray], r: Union[float, NDArray], T: Union[int, float, NDArray], m: Union[int, NDArray] = 1) -> Union[float, NDArray]:
+def future_value(C: Union[float, NDArray], r: Union[float, NDArray], T: Union[int, float, NDArray] = 1, m: Union[int, NDArray] = 1) -> Union[float, NDArray]:
     """
     Calcula el valor futuro de un monto presente con capitalización
-    Soporta valores individuales y arrays para análisis de sensibilidad
+    Función universal para cualquier período y frecuencia de capitalización
     Fórmula: FV = C * (1 + r/m)^(m*T)
     
     Args:
         C: Cash flow presente (ej: 1000 o [1000, 2000, 3000])
-        r: Tasa de interés anual (ej: 0.05 o [0.04, 0.05, 0.06])
-        T: Tiempo en años (ej: 10 o [5, 10, 15])
-        m: Períodos de capitalización por año (ej: 12 o [1, 12, 365])
+        r: Tasa de interés anual (ej: 0.08 para 8% TNA)
+        T: Períodos de tiempo completos (por defecto T=1 año). 
+           Usar T=1 para análisis ≤ 1 año. Para múltiples años: T=5, T=10, etc.
+           NO usar fracciones como 1/12.
+        m: Frecuencia de capitalización por período T (por defecto m=1 anual)
+           m=12 (mensual), m=4 (trimestral), m=2 (semestral), m=1 (anual)
     
     Returns:
         Union[float, NDArray]: Valor futuro (escalar o array)
         
     Example:
-        >>> future_value(1000, 0.05, 10, 1)  # Valor individual
-        1628.89  # Valor futuro
-        >>> future_value([1000, 2000], [0.05, 0.06], [10, 15], 1)  # Arrays
-        array([1628.89, 4793.67])  # VF para múltiples escenarios
+        >>> future_value(1000, 0.05, T=10)  # 10 años, capitalización anual
+        1628.89  # Valor futuro después de 10 años
+        >>> future_value(1000, 0.08, m=12)  # 1 año (T=1), capitalización mensual
+        1083.00  # Valor futuro con capitalización mensual
+        >>> future_value(100, 0.08, m=12)  # Para ON: análisis anual con cap. mensual
+        108.30   # Valor después de 1 año completo
+        >>> future_value(100, 0.08, T=5, m=12)  # 5 años con capitalización mensual
+        149.18   # Valor después de 5 años
     """
     result = C * (1 + r/m) ** (m * T)
     # Si todos los inputs son escalares, retorna escalar
