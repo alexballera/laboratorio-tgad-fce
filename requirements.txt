@@ -17,6 +17,9 @@ statsmodels==0.14.5
 # Para cálculos financieros (Sesión 16+)
 numpy-financial==1.0.0
 
+# Para descarga de datos financieros (Integradora 2.2)
+yfinance==0.2.40
+
 # Para optimización lineal (Sesión 7)
 pulp==2.8.0
 
