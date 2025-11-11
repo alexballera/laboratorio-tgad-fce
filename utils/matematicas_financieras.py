@@ -382,20 +382,20 @@ def profitability_index(initial_investment: float, cash_flows: list, r: float, T
 
 def payback_period(initial_investment: float, cash_flows: list) -> float:
     """
-    Calcula el período de recuperación simple (sin descuento)
+    Calcula el período de recuperación de la inversión
     
     Args:
         initial_investment: Inversión inicial (ej: 10000)
-        cash_flows: Lista de flujos de caja futuros (ej: [3000, 4000, 5000])
+        cash_flows: Lista de flujos de caja (ej: [3000, 4000, 5000])
     
     Returns:
-        float: Período de recuperación en años
+        float: Período de recuperación en años (o float('inf') si nunca se recupera)
         
     Example:
-        >>> payback_period(10000, [3000, 4000, 5000])  # Recuperación en aprox 2.75 años
+        >>> payback_period(10000, [3000, 4000, 5000])
         2.75  # Se recupera la inversión en 2.75 años
-        >>> payback_period(5000, [2000, 2000, 2000])  # Recuperación en 2.5 años
-        2.5   # Se recupera la inversión en 2.5 años
+        >>> payback_period(8000, [2500, 3000, 4000])
+        2.17  # Se recupera la inversión en 2.17 años
     """
     cumulative_cash_flow = 0
     
@@ -406,43 +406,6 @@ def payback_period(initial_investment: float, cash_flows: list) -> float:
             # Interpolación para encontrar el momento exacto
             previous_cumulative = cumulative_cash_flow - cf
             fraction = (initial_investment - previous_cumulative) / cf
-            return i + fraction
-    
-    # Si nunca se recupera la inversión
-    return float('inf')
-
-# %%
-
-def discounted_payback_period(initial_investment: float, cash_flows: list, r: float, m: int = 1) -> float:
-    """
-    Calcula el período de recuperación descontado con capitalización
-    
-    Args:
-        initial_investment: Inversión inicial (ej: 10000)
-        cash_flows: Lista de flujos de caja futuros (ej: [3000, 4000, 5000])
-        r: Tasa de interés anual (ej: 0.10 para 10%)
-        m: Períodos de capitalización por año (ej: 12 para mensual, 1 para anual)
-    
-    Returns:
-        float: Período de recuperación descontado en años
-        
-    Example:
-        >>> discounted_payback_period(10000, [4000, 5000, 6000], 0.10, 1)  # Con descuento al 10%
-        2.38  # Se recupera la inversión descontada en 2.38 años
-        >>> discounted_payback_period(10000, [3000, 4000, 5000], 0.15, 1)  # Con descuento al 15%
-        3.45  # Mayor tasa = mayor tiempo de recuperación
-    """
-    cumulative_pv = 0
-    
-    for i, cf in enumerate(cash_flows):
-        time_period = (i + 1) / m
-        pv_cf = cf / (1 + r/m) ** (m * time_period)
-        cumulative_pv += pv_cf
-        
-        if cumulative_pv >= initial_investment:
-            # Interpolación para encontrar el momento exacto
-            previous_cumulative = cumulative_pv - pv_cf
-            fraction = (initial_investment - previous_cumulative) / pv_cf
             return i + fraction
     
     # Si nunca se recupera la inversión
