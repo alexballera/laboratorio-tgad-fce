@@ -69,7 +69,7 @@ def annualized_rate(r: float, m: int) -> float:
 
 # %% Funciones de Valor Presente y Futuro
 
-def present_value(C: Union[float, NDArray], r: Union[float, NDArray], T: Union[int, NDArray], m: Union[int, NDArray] = 1) -> Union[float, NDArray]:
+def present_value(C: Union[float, NDArray], r: Union[float, NDArray], T: Union[int, float, NDArray], m: Union[int, NDArray] = 1) -> Union[float, NDArray]:
     """
     Calcula el valor presente de un monto futuro con capitalización
     Soporta valores individuales y arrays para análisis de sensibilidad
@@ -98,7 +98,7 @@ def present_value(C: Union[float, NDArray], r: Union[float, NDArray], T: Union[i
 
 # %%
 
-def future_value(C: Union[float, NDArray], r: Union[float, NDArray], T: Union[int, NDArray], m: Union[int, NDArray] = 1) -> Union[float, NDArray]:
+def future_value(C: Union[float, NDArray], r: Union[float, NDArray], T: Union[int, float, NDArray], m: Union[int, NDArray] = 1) -> Union[float, NDArray]:
     """
     Calcula el valor futuro de un monto presente con capitalización
     Soporta valores individuales y arrays para análisis de sensibilidad
@@ -127,7 +127,7 @@ def future_value(C: Union[float, NDArray], r: Union[float, NDArray], T: Union[in
 
 # %%
 
-def present_value_annuity(C: float, r: float, T: int, m: int = 1) -> float:
+def present_value_annuity(C: float, r: float, T: Union[int, float], m: int = 1) -> float:
     """
     Calcula el valor presente de una anualidad con capitalización
     Fórmula: PV = C * [1 - (1 + r/m)^(-m*T)] / (r/m)
@@ -155,7 +155,7 @@ def present_value_annuity(C: float, r: float, T: int, m: int = 1) -> float:
 
 # %%
 
-def future_value_annuity(C: float, r: float, T: int, m: int = 1) -> float:
+def future_value_annuity(C: float, r: float, T: Union[int, float], m: int = 1) -> float:
     """
     Calcula el valor futuro de una anualidad con capitalización
     Fórmula: FV = C * [((1 + r/m)^(m*T) - 1) / (r/m)]
