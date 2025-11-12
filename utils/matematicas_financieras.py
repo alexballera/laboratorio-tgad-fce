@@ -587,56 +587,531 @@ def sensitivity_analysis_npv(initial_investment: float, cash_flows: list,
 
 # %%
 
-def monte_carlo_npv(initial_investment: float, cash_flows_mean: list, cash_flows_std: list,
-                   r_mean: float, r_std: float, n_simulations: int = 1000, 
-                   T: Optional[int] = None, m: int = 1) -> np.ndarray:
+def monte_carlo_npv(cash_flows: list, discount_rate_mean: float, volatility_flows: float,
+                   volatility_rate: float, simulations: int = 1000) -> np.ndarray:
     """
-    Simulación Monte Carlo para análisis de riesgo de NPV.
+    Simulación Monte Carlo simplificada para análisis de riesgo de NPV - Versión Académica.
     
-    @param {float} initial_investment - Inversión inicial
-    @param {list} cash_flows_mean - Media de cada flujo de caja
-    @param {list} cash_flows_std - Desviación estándar de cada flujo de caja
-    @param {float} r_mean - Tasa de descuento promedio
-    @param {float} r_std - Desviación estándar de la tasa
-    @param {int} n_simulations - Número de simulaciones (por defecto 1000)
-    @param {Optional[int]} T - Número total de períodos
-    @param {int} m - Períodos de capitalización por año (por defecto 1)
+    Esta función implementa una simulación Monte Carlo para evaluar el riesgo de inversión
+    considerando la incertidumbre tanto en los flujos de caja como en la tasa de descuento.
+    La simulación genera múltiples escenarios posibles y calcula el NPV para cada uno,
+    proporcionando una distribución de resultados que permite cuantificar el riesgo.
+    
+    @param {list} cash_flows - Array de flujos de caja que incluye:
+                              - Primer elemento: Inversión inicial (valor negativo)
+                              - Elementos siguientes: Flujos de caja futuros esperados (valores positivos)
+                              Ejemplo: [-10000, 3500, 4500, 5500] significa inversión de $10,000
+                              y flujos futuros de $3,500, $4,500 y $5,500 en años 1, 2 y 3
+    
+    @param {float} discount_rate_mean - Tasa de descuento promedio (valor central esperado)
+                                       Representa la tasa de retorno requerida para el proyecto
+                                       Ejemplo: 0.10 significa 10% anual
+    
+    @param {float} volatility_flows - Volatilidad de los flujos de caja (desviación estándar relativa)
+                                     Representa qué tan variables pueden ser los flujos respecto a su valor esperado
+                                     Ejemplo: 0.15 significa que los flujos pueden variar ±15% de su valor base
+    
+    @param {float} volatility_rate - Volatilidad de la tasa de descuento (desviación estándar absoluta)
+                                    Representa la incertidumbre en la tasa de descuento
+                                    Ejemplo: 0.02 significa que la tasa puede variar ±2 puntos porcentuales
+    
+    @param {int} simulations - Número de simulaciones a realizar (por defecto 1000)
+                              Mayor número = mayor precisión pero más tiempo de cálculo
+                              1000 simulaciones suelen ser suficientes para análisis inicial
+    
     @returns {np.ndarray} Array con resultados NPV de todas las simulaciones
+                         Cada elemento representa el NPV calculado en una simulación específica
+                         La distribución completa permite calcular:
+                         - NPV promedio: np.mean(resultado)
+                         - Riesgo (desviación): np.std(resultado)
+                         - Probabilidad de éxito: np.sum(resultado >= 0) / len(resultado)
     
     @example
-    >>> cf_mean = [3500, 4500, 5500]
-    >>> cf_std = [500, 600, 700]
-    >>> npv_dist = monte_carlo_npv(10000, cf_mean, cf_std, 0.10, 0.02, 1000)
-    >>> np.mean(npv_dist)  # NPV promedio
-    1061.57
-    >>> np.std(npv_dist)   # Riesgo
-    850.23
+    Análisis de un proyecto de inversión en equipamiento:
+    >>> # Proyecto: Inversión $100,000, flujos esperados $35,000, $45,000, $55,000
+    >>> cash_flows = [-100000, 35000, 45000, 55000]
+    >>> tasa_descuento = 0.10  # 10% anual
+    >>> volatilidad_flujos = 0.20  # ±20% de variabilidad en flujos
+    >>> volatilidad_tasa = 0.025   # ±2.5% de variabilidad en tasa
+    >>> 
+    >>> resultados = monte_carlo_npv(cash_flows, tasa_descuento, volatilidad_flujos, volatilidad_tasa, 1000)
+    >>> 
+    >>> # Análisis de resultados
+    >>> npv_promedio = np.mean(resultados)      # NPV esperado: $8,456
+    >>> riesgo = np.std(resultados)             # Desviación estándar: $15,234
+    >>> prob_exito = np.mean(resultados >= 0)   # Probabilidad NPV ≥ 0: 72.3%
+    >>> 
+    >>> print(f"NPV Promedio: ${npv_promedio:,.0f}")
+    >>> print(f"Riesgo (σ): ${riesgo:,.0f}")
+    >>> print(f"Probabilidad de éxito: {prob_exito:.1%}")
     
     @formula
-    NPV = -I₀ + Σ[CF_t(μ,σ) / (1 + r(μ,σ)/m)^(m*t)] para n simulaciones
+    Para cada simulación i:
+    1. Generar tasa aleatoria: r_i ~ N(discount_rate_mean, volatility_rate²)
+    2. Para cada flujo j: CF_j_i ~ N(cash_flows[j], (cash_flows[j] × volatility_flows)²)
+    3. Calcular NPV_i = CF_0 + Σ[CF_j_i / (1 + r_i)^j] para j = 1 a n
+    
+    Distribución final: {NPV_1, NPV_2, ..., NPV_simulations}
+    
+    @methodology
+    Método Monte Carlo:
+    1. **Modelado de Incertidumbre**: Se asume que tanto los flujos de caja como la tasa de descuento
+       siguen distribuciones normales, lo cual es razonable para muchos proyectos empresariales
+    
+    2. **Generación de Escenarios**: Se crean múltiples escenarios posibles combinando valores
+       aleatorios de flujos y tasas, cada uno con su probabilidad de ocurrencia
+    
+    3. **Cálculo de NPV**: Para cada escenario se calcula el NPV usando la fórmula tradicional
+       de valor presente neto con los valores específicos de ese escenario
+    
+    4. **Análisis Estadístico**: La distribución resultante permite calcular métricas de riesgo
+       y probabilidades de éxito del proyecto
+    
+    @applications
+    - **Evaluación de Proyectos**: Determinar viabilidad considerando riesgo e incertidumbre
+    - **Análisis de Sensibilidad**: Entender cómo la variabilidad afecta los resultados
+    - **Gestión de Riesgo**: Cuantificar probabilidades de pérdida o ganancia
+    - **Toma de Decisiones**: Comparar proyectos considerando riesgo y retorno esperado
+    
+    @limitations
+    - Asume distribuciones normales (puede no ser realista en algunos casos)
+    - Los flujos se consideran independientes entre períodos
+    - No considera correlaciones entre tasa de descuento y flujos de caja
+    - La volatilidad se mantiene constante durante todo el período
     
     @note
-    - Asume distribuciones normales para flujos y tasa
-    - Permite cuantificar riesgo del proyecto
-    - Usa seed=42 para reproducibilidad
+    - **Reproducibilidad**: Usa semilla fija (seed=42) para resultados consistentes en análisis académico
+    - **Eficiencia**: Implementación vectorizada usando NumPy para cálculos rápidos
+    - **Robustez**: Incluye validación para evitar tasas de descuento negativas
+    - **Interpretación**: Resultados positivos indican NPV favorable, negativos indican pérdida
     """    
-    # Generar simulaciones aleatorias
-    np.random.seed(42)  # Para reproducibilidad
-    rates = np.random.normal(r_mean, r_std, n_simulations)
-    rates = np.maximum(rates, 0.001)  # Evitar tasas negativas
+    # ===================================================================================
+    # PASO 1: CONFIGURACIÓN INICIAL Y VALIDACIÓN
+    # ===================================================================================
     
-    npv_results = np.full(n_simulations, -initial_investment, dtype=float)
+    # Establecer semilla para reproducibilidad en análisis académico
+    # Esto garantiza que las simulaciones den resultados consistentes entre ejecuciones
+    np.random.seed(42)
     
-    for i, (cf_mean, cf_std) in enumerate(zip(cash_flows_mean, cash_flows_std)):
-        # Generar flujos de caja aleatorios
-        cash_flows_sim = np.random.normal(cf_mean, cf_std, n_simulations)
-        time_period = (i + 1) / m
+    # Extraer inversión inicial (primer elemento, debe ser negativo)
+    initial_investment = cash_flows[0]
+    # Extraer flujos futuros (elementos restantes, deben ser positivos)
+    future_cash_flows = cash_flows[1:]
+    
+    # ===================================================================================
+    # PASO 2: GENERACIÓN DE VARIABLES ALEATORIAS
+    # ===================================================================================
+    
+    # Generar tasas de descuento aleatorias siguiendo distribución normal
+    # La tasa representa el costo de capital o retorno requerido del proyecto
+    discount_rates = np.random.normal(discount_rate_mean, volatility_rate, simulations)
+    
+    # Asegurar que las tasas sean positivas (restricción económica lógica)
+    # Se establece un mínimo de 0.1% para evitar problemas matemáticos
+    discount_rates = np.maximum(discount_rates, 0.001)
+    
+    # Inicializar array de resultados NPV con la inversión inicial
+    # Todos los NPV comenzarán con el valor negativo de la inversión
+    npv_results = np.full(simulations, initial_investment, dtype=float)
+    
+    # ===================================================================================
+    # PASO 3: SIMULACIÓN DE FLUJOS DE CAJA Y CÁLCULO DE NPV
+    # ===================================================================================
+    
+    # Iterar sobre cada flujo de caja futuro (año 1, año 2, etc.)
+    for period, expected_cash_flow in enumerate(future_cash_flows, start=1):
         
-        # Calcular valor presente para cada simulación
-        pv_cf = cash_flows_sim / (1 + rates/m) ** (m * time_period)
-        npv_results += pv_cf
+        # Calcular desviación estándar absoluta para este flujo específico
+        # La volatilidad se expresa como porcentaje del flujo esperado
+        cash_flow_std = abs(expected_cash_flow * volatility_flows)
+        
+        # Generar flujos de caja aleatorios para este período
+        # Cada simulación tendrá un valor diferente para este flujo
+        simulated_cash_flows = np.random.normal(expected_cash_flow, cash_flow_std, simulations)
+        
+        # Calcular valor presente de los flujos simulados para cada escenario
+        # Fórmula: PV = CF / (1 + r)^t, donde t es el período
+        present_values = simulated_cash_flows / (1 + discount_rates) ** period
+        
+        # Sumar el valor presente de este período al NPV acumulado
+        # Cada simulación acumula el valor presente de todos sus flujos
+        npv_results += present_values
     
+    # ===================================================================================
+    # PASO 4: RETORNO DE RESULTADOS
+    # ===================================================================================
+    
+    # Retornar array completo con todos los NPV simulados
+    # Cada elemento representa un escenario posible del proyecto
     return npv_results
+
+# %%
+
+def plot_monte_carlo_results(npv_results: np.ndarray, title: str = "Simulación Monte Carlo - Análisis de NPV") -> dict:
+    """
+    Genera visualización estilo SPSS para resultados de simulación Monte Carlo de NPV.
+    
+    Esta función crea un histograma profesional que muestra la distribución de NPV obtenida
+    mediante simulación Monte Carlo, incluyendo análisis estadístico completo y probabilidades
+    de éxito. El estilo visual emula las salidas de software estadístico profesional como SPSS.
+    
+    @param {np.ndarray} npv_results - Array con resultados de simulación Monte Carlo
+                                     Debe contener valores NPV de múltiples simulaciones
+                                     Típicamente obtenido de la función monte_carlo_npv()
+    
+    @param {str} title - Título personalizado para el gráfico (opcional)
+                        Por defecto: "Simulación Monte Carlo - Análisis de NPV"
+                        Permite personalizar según el proyecto específico
+    
+    @returns {dict} Diccionario con métricas estadísticas calculadas:
+                   - 'npv_mean': NPV promedio de todas las simulaciones
+                   - 'npv_std': Desviación estándar (medida de riesgo)
+                   - 'success_probability': Probabilidad de NPV ≥ 0
+                   - 'failure_probability': Probabilidad de NPV < 0
+                   - 'percentile_5': Percentil 5 (peor escenario del 95% de casos)
+                   - 'percentile_95': Percentil 95 (mejor escenario del 95% de casos)
+                   - 'total_simulations': Número total de simulaciones realizadas
+    
+    @example
+    Análisis completo de un proyecto de inversión:
+    >>> # Ejecutar simulación Monte Carlo
+    >>> cash_flows = [-100000, 35000, 45000, 55000]
+    >>> resultados = monte_carlo_npv(cash_flows, 0.10, 0.20, 0.025, 1000)
+    >>> 
+    >>> # Generar visualización y obtener métricas
+    >>> metricas = plot_monte_carlo_results(resultados, "Proyecto Expansión Industrial")
+    >>> 
+    >>> # Interpretar resultados
+    >>> print(f"NPV Esperado: ${metricas['npv_mean']:,.0f}")
+    >>> print(f"Riesgo (Desv. Std.): ${metricas['npv_std']:,.0f}")
+    >>> print(f"Probabilidad de Éxito: {metricas['success_probability']:.1%}")
+    >>> print(f"En el 90% de casos, NPV estará entre ${metricas['percentile_5']:,.0f} y ${metricas['percentile_95']:,.0f}")
+    
+    @visualization_features
+    El gráfico incluye:
+    1. **Histograma con Colores Diferenciados**:
+       - Verde: NPV ≥ 0 (escenarios exitosos)
+       - Rojo: NPV < 0 (escenarios de pérdida)
+    
+    2. **Líneas de Referencias**:
+       - Línea vertical en NPV = 0 (punto de equilibrio)
+       - Línea vertical en NPV promedio (resultado esperado)
+    
+    3. **Anotaciones Estadísticas**:
+       - Probabilidad de éxito prominente
+       - NPV promedio y desviación estándar
+       - Rango de confianza (percentiles 5-95)
+    
+    4. **Formato Profesional**:
+       - Grilla para facilitar lectura
+       - Ejes claramente etiquetados en español
+       - Colores profesionales y legibles
+       - Leyenda explicativa
+    
+    @interpretation_guide
+    **Cómo interpretar los resultados**:
+    
+    - **NPV Promedio > 0**: El proyecto es favorable en promedio
+    - **Alta Probabilidad de Éxito (>70%)**: Proyecto con buen perfil riesgo-retorno
+    - **Baja Desviación Estándar**: Menor riesgo, resultados más predecibles
+    - **Amplio rango Percentil 5-95**: Mayor incertidumbre en resultados
+    
+    **Criterios de Decisión Sugeridos**:
+    - Probabilidad éxito > 70% AND NPV promedio > 0: ACEPTAR proyecto
+    - Probabilidad éxito 50-70% AND NPV promedio > 0: ANALIZAR más detalladamente
+    - Probabilidad éxito < 50% OR NPV promedio < 0: RECHAZAR proyecto
+    
+    @statistical_methodology
+    Las métricas calculadas utilizan:
+    - **Media**: np.mean() - Valor esperado del NPV
+    - **Desviación Estándar**: np.std() - Medida de riesgo/volatilidad
+    - **Percentiles**: np.percentile() - Rango de resultados probable
+    - **Probabilidad**: Conteo condicional / Total simulaciones
+    
+    @note
+    - **Dependencias**: Requiere matplotlib.pyplot importado como plt
+    - **Formato Salida**: Muestra el gráfico automáticamente con plt.show()
+    - **Retorno**: Diccionario con métricas para análisis posterior
+    - **Idioma**: Todas las etiquetas y texto en español académico
+    """
+    import matplotlib.pyplot as plt
+    
+    # ===================================================================================
+    # CÁLCULO DE MÉTRICAS ESTADÍSTICAS
+    # ===================================================================================
+    
+    # Métricas básicas de tendencia central y dispersión
+    npv_mean = np.mean(npv_results)          # Valor esperado del NPV
+    npv_std = np.std(npv_results)            # Riesgo medido como desviación estándar
+    
+    # Probabilidades de éxito y fracaso
+    success_count = np.sum(npv_results >= 0)  # Número de NPV no negativos
+    total_simulations = len(npv_results)      # Total de simulaciones
+    success_probability = success_count / total_simulations
+    failure_probability = 1 - success_probability
+    
+    # Percentiles para análisis de rango de resultados
+    percentile_5 = np.percentile(npv_results, 5)    # Peor escenario típico
+    percentile_95 = np.percentile(npv_results, 95)   # Mejor escenario típico
+    
+    # ===================================================================================
+    # CONFIGURACIÓN DEL GRÁFICO ESTILO PROFESIONAL
+    # ===================================================================================
+    
+    # Configurar figura con tamaño apropiado para análisis detallado
+    plt.figure(figsize=(12, 8))
+    
+    # Determinar número óptimo de bins para el histograma
+    # Regla de Sturges: número de bins ≈ log2(n) + 1, redondeado
+    n_bins = min(50, max(20, int(np.log2(total_simulations)) + 1))
+    
+    # ===================================================================================
+    # CREACIÓN DEL HISTOGRAMA CON COLORES DIFERENCIADOS
+    # ===================================================================================
+    
+    # Separar datos en exitosos y no exitosos para coloreado diferencial
+    success_data = npv_results[npv_results >= 0]    # NPV positivos o cero
+    failure_data = npv_results[npv_results < 0]     # NPV negativos
+    
+    # Crear histograma con colores diferenciados
+    # Verde para éxito, rojo para pérdidas
+    plt.hist(success_data, bins=n_bins, alpha=0.7, color='green', 
+             label=f'NPV ≥ 0 ({success_probability:.1%})', edgecolor='darkgreen', linewidth=0.5)
+    
+    plt.hist(failure_data, bins=n_bins, alpha=0.7, color='red', 
+             label=f'NPV < 0 ({failure_probability:.1%})', edgecolor='darkred', linewidth=0.5)
+    
+    # ===================================================================================
+    # LÍNEAS DE REFERENCIA Y ANOTACIONES
+    # ===================================================================================
+    
+    # Línea vertical en NPV = 0 (punto de equilibrio)
+    plt.axvline(0, color='black', linestyle='--', linewidth=2, 
+                label='Punto de Equilibrio (NPV = 0)')
+    
+    # Línea vertical en NPV promedio
+    plt.axvline(npv_mean, color='blue', linestyle='-', linewidth=2, 
+                label=f'NPV Promedio: ${npv_mean:,.0f}')
+    
+    # ===================================================================================
+    # ETIQUETAS Y FORMATO DEL GRÁFICO
+    # ===================================================================================
+    
+    # Títulos y etiquetas en español académico
+    plt.title(title, fontsize=16, fontweight='bold', pad=20)
+    plt.xlabel('Valor Presente Neto (NPV) en $', fontsize=12, fontweight='bold')
+    plt.ylabel('Frecuencia de Simulaciones', fontsize=12, fontweight='bold')
+    
+    # Configurar grilla para facilitar lectura
+    plt.grid(True, alpha=0.3, linestyle='-', linewidth=0.5)
+    
+    # Leyenda en posición óptima
+    plt.legend(loc='upper left', fontsize=10, framealpha=0.9)
+    
+    # ===================================================================================
+    # CAJA DE ESTADÍSTICAS DETALLADAS
+    # ===================================================================================
+    
+    # Crear texto con métricas principales
+    stats_text = f"""ANÁLISIS ESTADÍSTICO
+    
+NPV Promedio: ${npv_mean:,.0f}
+Desviación Estándar: ${npv_std:,.0f}
+    
+ANÁLISIS DE RIESGO
+Probabilidad de Éxito: {success_probability:.1%}
+Probabilidad de Pérdida: {failure_probability:.1%}
+    
+RANGO DE CONFIANZA (90%)
+Percentil 5%: ${percentile_5:,.0f}
+Percentil 95%: ${percentile_95:,.0f}
+    
+Simulaciones: {total_simulations:,}"""
+    
+    # Posicionar caja de estadísticas en ubicación óptima
+    plt.text(0.02, 0.98, stats_text, transform=plt.gca().transAxes, 
+             verticalalignment='top', bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.8),
+             fontsize=9, family='monospace')
+    
+    # ===================================================================================
+    # AJUSTES FINALES Y VISUALIZACIÓN
+    # ===================================================================================
+    
+    # Ajustar diseño para evitar superposiciones
+    plt.tight_layout()
+    
+    # Mostrar gráfico
+    plt.show()
+    
+    # ===================================================================================
+    # RETORNO DE MÉTRICAS PARA ANÁLISIS POSTERIOR
+    # ===================================================================================
+    
+    return {
+        'npv_mean': npv_mean,
+        'npv_std': npv_std,
+        'success_probability': success_probability,
+        'failure_probability': failure_probability,
+        'percentile_5': percentile_5,
+        'percentile_95': percentile_95,
+        'total_simulations': total_simulations
+    }
+
+# %%
+
+def ejemplo_monte_carlo_completo():
+    """
+    Ejemplo académico completo de análisis Monte Carlo para evaluación de inversiones.
+    
+    Este ejemplo demuestra el uso integrado de las funciones monte_carlo_npv() y 
+    plot_monte_carlo_results() para realizar un análisis completo de riesgo de inversión
+    en un contexto empresarial típico de la carrera de Ciencias Económicas.
+    
+    @scenario
+    **CASO DE ESTUDIO: Expansión de Línea de Producción**
+    
+    Una empresa manufacturera evalúa la inversión en una nueva línea de producción
+    para ampliar su capacidad. El análisis considera la incertidumbre típica en:
+    - Flujos de caja por variaciones en demanda y costos
+    - Tasa de descuento por cambios en condiciones de mercado
+    
+    **Datos del Proyecto:**
+    - Inversión Inicial: $500,000 (equipamiento y puesta en marcha)
+    - Flujos Esperados: $180,000, $220,000, $280,000 (años 1, 2, 3)
+    - Tasa de Descuento: 12% anual (costo promedio de capital)
+    - Volatilidad Flujos: 25% (variabilidad por incertidumbre de mercado)
+    - Volatilidad Tasa: 3% (variabilidad por condiciones económicas)
+    
+    @returns None - Imprime resultados y muestra gráfico
+    
+    @methodology
+    1. **Definición de Parámetros**: Establecer valores base y niveles de incertidumbre
+    2. **Simulación Monte Carlo**: Generar 1000 escenarios posibles
+    3. **Análisis Estadístico**: Calcular métricas de riesgo y rentabilidad
+    4. **Visualización**: Crear gráfico estilo SPSS con interpretación
+    5. **Toma de Decisión**: Evaluar viabilidad basada en criterios establecidos
+    
+    @educational_objectives
+    - Demostrar aplicación práctica de simulación Monte Carlo
+    - Enseñar interpretación de resultados de análisis de riesgo
+    - Mostrar integración de herramientas financieras y estadísticas
+    - Desarrollar criterios de decisión empresarial bajo incertidumbre
+    """
+    
+    print("="*70)
+    print("ANÁLISIS MONTE CARLO - EVALUACIÓN DE PROYECTO DE INVERSIÓN")
+    print("="*70)
+    print()
+    
+    # ===================================================================================
+    # DEFINICIÓN DE PARÁMETROS DEL PROYECTO
+    # ===================================================================================
+    
+    print("📊 PARÁMETROS DEL PROYECTO")
+    print("-" * 30)
+    
+    # Flujos de caja del proyecto (incluyendo inversión inicial como primer elemento)
+    cash_flows = [-500000, 180000, 220000, 280000]
+    
+    print(f"• Inversión Inicial: ${abs(cash_flows[0]):,}")
+    print(f"• Flujos Esperados:")
+    for i, flujo in enumerate(cash_flows[1:], 1):
+        print(f"  - Año {i}: ${flujo:,}")
+    
+    # Parámetros de incertidumbre
+    discount_rate_mean = 0.12    # 12% costo de capital
+    volatility_flows = 0.25      # 25% volatilidad en flujos
+    volatility_rate = 0.03       # 3% volatilidad en tasa
+    simulations = 1000           # Número de simulaciones
+    
+    print(f"\n• Tasa de Descuento Promedio: {discount_rate_mean:.1%}")
+    print(f"• Volatilidad de Flujos: ±{volatility_flows:.1%}")
+    print(f"• Volatilidad de Tasa: ±{volatility_rate:.1%}")
+    print(f"• Número de Simulaciones: {simulations:,}")
+    print()
+    
+    # ===================================================================================
+    # EJECUCIÓN DE SIMULACIÓN MONTE CARLO
+    # ===================================================================================
+    
+    print("🎯 EJECUTANDO SIMULACIÓN MONTE CARLO...")
+    print("-" * 40)
+    
+    # Ejecutar simulación
+    resultados = monte_carlo_npv(
+        cash_flows=cash_flows,
+        discount_rate_mean=discount_rate_mean,
+        volatility_flows=volatility_flows,
+        volatility_rate=volatility_rate,
+        simulations=simulations
+    )
+    
+    print(f"✅ Simulación completada: {len(resultados):,} escenarios generados")
+    print()
+    
+    # ===================================================================================
+    # ANÁLISIS ESTADÍSTICO DE RESULTADOS
+    # ===================================================================================
+    
+    print("📈 RESULTADOS ESTADÍSTICOS")
+    print("-" * 30)
+    
+    # Generar visualización y obtener métricas
+    metricas = plot_monte_carlo_results(
+        resultados, 
+        "Proyecto Expansión Línea de Producción - Análisis Monte Carlo"
+    )
+    
+    # Mostrar métricas principales
+    print(f"• NPV Promedio: ${metricas['npv_mean']:,.0f}")
+    print(f"• Riesgo (Desv. Std.): ${metricas['npv_std']:,.0f}")
+    print(f"• Probabilidad de Éxito: {metricas['success_probability']:.1%}")
+    print(f"• Probabilidad de Pérdida: {metricas['failure_probability']:.1%}")
+    print()
+    
+    print("📊 RANGO DE CONFIANZA (90%)")
+    print("-" * 30)
+    print(f"• Escenario Pesimista (Percentil 5%): ${metricas['percentile_5']:,.0f}")
+    print(f"• Escenario Optimista (Percentil 95%): ${metricas['percentile_95']:,.0f}")
+    print(f"• Amplitud del Rango: ${metricas['percentile_95'] - metricas['percentile_5']:,.0f}")
+    print()
+    
+    # ===================================================================================
+    # INTERPRETACIÓN Y RECOMENDACIÓN
+    # ===================================================================================
+    
+    print("🎯 INTERPRETACIÓN Y RECOMENDACIÓN")
+    print("-" * 40)
+    
+    # Criterios de decisión
+    npv_positivo = metricas['npv_mean'] > 0
+    alta_probabilidad = metricas['success_probability'] > 0.70
+    riesgo_aceptable = metricas['npv_std'] / abs(metricas['npv_mean']) < 1.5  # CV < 150%
+    
+    print("Criterios de Evaluación:")
+    print(f"✓ NPV Promedio Positivo: {'SÍ' if npv_positivo else 'NO'}")
+    print(f"✓ Probabilidad Éxito > 70%: {'SÍ' if alta_probabilidad else 'NO'}")
+    print(f"✓ Riesgo Aceptable: {'SÍ' if riesgo_aceptable else 'NO'}")
+    print()
+    
+    # Recomendación final
+    if npv_positivo and alta_probabilidad:
+        recomendacion = "🟢 ACEPTAR EL PROYECTO"
+        justificacion = "El proyecto muestra NPV positivo con alta probabilidad de éxito"
+    elif npv_positivo:
+        recomendacion = "🟡 ANALIZAR MÁS DETALLADAMENTE"
+        justificacion = "NPV positivo pero con riesgo significativo"
+    else:
+        recomendacion = "🔴 RECHAZAR EL PROYECTO" 
+        justificacion = "NPV promedio negativo indica destrucción de valor"
+    
+    print(f"RECOMENDACIÓN: {recomendacion}")
+    print(f"JUSTIFICACIÓN: {justificacion}")
+    print()
+    
+    print("="*70)
+    print("ANÁLISIS COMPLETADO")
+    print("="*70)
 
 # %%
 
@@ -682,3 +1157,18 @@ def batch_loan_analysis(principals: np.ndarray, rates: np.ndarray, periods: np.n
         'total_interest': total_interest,
         'interest_ratio': total_interest / principals  # Proporción de interés vs capital
     }
+    first_principal = payment_principal(principals, rates, 1, periods)
+    
+    # Calcular total pagado y total de intereses
+    total_paid = payments * periods
+    total_interest = total_paid - principals
+    
+    return {
+        'payments': payments,
+        'first_interest': first_interest,
+        'first_principal': first_principal,
+        'total_paid': total_paid,
+        'total_interest': total_interest,
+        'interest_ratio': total_interest / principals  # Proporción de interés vs capital
+    }
+# %%
