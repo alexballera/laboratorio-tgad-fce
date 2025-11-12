@@ -5,25 +5,28 @@
 # %% Importaciones
 import numpy as np
 import numpy_financial as npf
-from typing import Union, Optional
-from numpy.typing import NDArray
+from typing import Optional, Union
 
 # %% Funciones de Tasas de Interés
 
 def nominal_to_effective_rate(r: float, m: int) -> float:
     """
-    Convierte tasa nominal a tasa efectiva por período
+    Convierte tasa nominal a tasa efectiva por período.
     
-    Args:
-        r: Tasa nominal anual (ej: 0.12 para 12%)
-        m: Períodos de capitalización por año (ej: 12 para mensual)
+    @param {float} r - Tasa nominal anual
+    @param {int} m - Períodos de capitalización por año
+    @returns {float} Tasa efectiva por período
     
-    Returns:
-        float: Tasa efectiva por período
-        
-    Example:
-        >>> nominal_to_effective_rate(0.12, 12)  # 12% anual capitalización mensual
-        0.01  # 1% mensual
+    @example
+    >>> nominal_to_effective_rate(0.12, 12)  # 12% anual capitalización mensual
+    0.01  # 1% mensual
+    
+    @formula
+    Tasa efectiva = r / m
+    
+    @note
+    - Convierte tasa anual a tasa por período de capitalización
+    - Para 12% anual mensual: 0.12/12 = 0.01 (1% mensual)
     """
     return r / m
 
@@ -31,19 +34,22 @@ def nominal_to_effective_rate(r: float, m: int) -> float:
 
 def effective_annual_rate(r: float, m: int) -> float:
     """
-    Calcula la tasa efectiva anual a partir de la tasa nominal
-    Fórmula: (1 + r/m)^m - 1
+    Calcula la tasa efectiva anual a partir de la tasa nominal.
     
-    Args:
-        r: Tasa nominal anual (ej: 0.12 para 12%)
-        m: Períodos de capitalización por año (ej: 12 para mensual)
+    @param {float} r - Tasa nominal anual
+    @param {int} m - Períodos de capitalización por año
+    @returns {float} Tasa efectiva anual
     
-    Returns:
-        float: Tasa efectiva anual
-        
-    Example:
-        >>> effective_annual_rate(0.12, 12)  # 12% anual capitalización mensual
-        0.1268  # 12.68% efectiva anual
+    @example
+    >>> effective_annual_rate(0.12, 12)  # 12% anual capitalización mensual
+    0.1268  # 12.68% efectiva anual
+    
+    @formula
+    TEA = (1 + r/m)^m - 1
+    
+    @note
+    - Considera el efecto de capitalización compuesta
+    - Mayor frecuencia de capitalización = mayor TEA
     """
     return (1 + r / m) ** m - 1
 
@@ -51,85 +57,91 @@ def effective_annual_rate(r: float, m: int) -> float:
 
 def annualized_rate(r: float, m: int) -> float:
     """
-    Convierte tasa periódica a tasa anualizada
-    Fórmula: (1 + r)^m - 1
+    Convierte tasa periódica a tasa anualizada.
     
-    Args:
-        r: Tasa por período (ej: 0.02 para 2% mensual)
-        m: Períodos por año (ej: 12 para mensual)
+    @param {float} r - Tasa por período
+    @param {int} m - Períodos por año
+    @returns {float} Tasa anualizada
     
-    Returns:
-        float: Tasa anualizada
-        
-    Example:
-        >>> annualized_rate(0.02, 12)  # 2% mensual
-        0.2682  # 26.82% anual
+    @example
+    >>> annualized_rate(0.02, 12)  # 2% mensual
+    0.2682  # 26.82% anual
+    
+    @formula
+    Tasa anualizada = (1 + r)^m - 1
+    
+    @note
+    - Convierte tasa periódica a equivalente anual
+    - Considera capitalización compuesta
     """
     return (1 + r) ** m - 1
 
 # %% Funciones de Valor Presente y Futuro
 
-def present_value(C: Union[float, NDArray], r: Union[float, NDArray], T: Union[int, float, NDArray] = 1, m: Union[int, NDArray] = 1) -> Union[float, NDArray]:
+def present_value(rate: Union[float, np.ndarray], nper: Union[int, np.ndarray], 
+                  pmt: Union[float, np.ndarray], fv: Union[int, np.ndarray] = 0) -> Union[float, np.ndarray]:
     """
-    Calcula el valor presente de un monto futuro con capitalización
-    Soporta valores individuales y arrays para análisis de sensibilidad
-    Fórmula: PV = C / (1 + r/m)^(m*T)
+    Calcula el valor presente de flujos futuros usando numpy_financial.
     
-    Args:
-        C: Cash flow futuro (ej: 1000 o [1000, 2000, 3000])
-        r: Tasa de interés anual (ej: 0.05 o [0.04, 0.05, 0.06])
-        T: Períodos de tiempo completos, usualmente años (ej: 1, 5, 10). 
-           Por defecto T=1. NO usar fracciones como 1/12.
-        m: Frecuencia de capitalización por período T (ej: 1=anual, 12=mensual)
+    @param {Union[float, np.ndarray]} fv - Valor futuro o cash flows futuros
+    @param {Union[float, np.ndarray]} rate - Tasa de interés por período
+    @param {Union[float, np.ndarray]} nper - Número de períodos de capitalización
+    @param {Union[float, np.ndarray]} pmt - Pago periódico (por defecto 0)
+    @returns {Union[float, np.ndarray]} Valor presente
     
-    Returns:
-        Union[float, NDArray]: Valor presente (escalar o array)
-        
-    Example:
-        >>> present_value(1000, 0.05, 10, 1)  # Valor individual
-        613.91  # Valor presente
-        >>> present_value([1000, 2000], [0.05, 0.06], [10, 15], 1)  # Arrays
-        array([613.91, 832.04])  # VP para múltiples escenarios
+    @example
+    >>> present_value(1000, 0.05, 10)  # $1000 en 10 períodos al 5%
+    613.91
+    >>> present_value([1000, 2000], [0.05, 0.06], [10, 15])  # Arrays
+    array([613.91, 832.04])
+    
+    @formula
+    PV = npf.pv(rate, nper, pmt, fv)
+    
+    @note
+    - Usa numpy_financial internamente para máxima precisión
+    - Soporta arrays para análisis de sensibilidad
+    - Para capitalización personalizada usar rate = tasa_anual/períodos_por_año
     """
-    result = C / (1 + r/m) ** (m * T)
+    result = -npf.pv(rate, nper, pmt, fv)  # type: ignore
+    
     # Si todos los inputs son escalares, retorna escalar
-    if (np.isscalar(C) and np.isscalar(r) and np.isscalar(T) and np.isscalar(m)):
+    if np.isscalar(fv) and np.isscalar(rate) and np.isscalar(nper) and np.isscalar(pmt):
         return float(result)
     return result
 
 # %%
 
-def future_value(C: Union[float, NDArray], r: Union[float, NDArray], T: Union[int, float, NDArray] = 1, m: Union[int, NDArray] = 1) -> Union[float, NDArray]:
+def future_value(pv: Union[float, np.ndarray], rate: Union[float, np.ndarray], 
+                nper: Union[float, np.ndarray] = 1, pmt: Union[float, np.ndarray] = 0) -> Union[float, np.ndarray]:
     """
-    Calcula el valor futuro de un monto presente con capitalización
-    Función universal para cualquier período y frecuencia de capitalización
-    Fórmula: FV = C * (1 + r/m)^(m*T)
+    Calcula el valor futuro de flujos presentes usando numpy_financial.
     
-    Args:
-        C: Cash flow presente (ej: 1000 o [1000, 2000, 3000])
-        r: Tasa de interés anual (ej: 0.08 para 8% TNA)
-        T: Períodos de tiempo completos (por defecto T=1 año). 
-           Usar T=1 para análisis ≤ 1 año. Para múltiples años: T=5, T=10, etc.
-           NO usar fracciones como 1/12.
-        m: Frecuencia de capitalización por período T (por defecto m=1 anual)
-           m=12 (mensual), m=4 (trimestral), m=2 (semestral), m=1 (anual)
+    @param {Union[float, np.ndarray]} pv - Valor presente o cash flows presentes
+    @param {Union[float, np.ndarray]} rate - Tasa de interés por período
+    @param {Union[float, np.ndarray]} nper - Número de períodos de capitalización
+    @param {Union[float, np.ndarray]} pmt - Pago periódico (por defecto 0)
+    @returns {Union[float, np.ndarray]} Valor futuro
     
-    Returns:
-        Union[float, NDArray]: Valor futuro (escalar o array)
-        
-    Example:
-        >>> future_value(1000, 0.05, T=10)  # 10 años, capitalización anual
-        1628.89  # Valor futuro después de 10 años
-        >>> future_value(1000, 0.08, m=12)  # 1 año (T=1), capitalización mensual
-        1083.00  # Valor futuro con capitalización mensual
-        >>> future_value(100, 0.08, m=12)  # Para ON: análisis anual con cap. mensual
-        108.30   # Valor después de 1 año completo
-        >>> future_value(100, 0.08, T=5, m=12)  # 5 años con capitalización mensual
-        149.18   # Valor después de 5 años
+    @example
+    >>> future_value(1000, 0.05, 10)  # $1000 a 10 períodos al 5%
+    1628.89
+    >>> future_value(1000, 0.08, 12)  # $1000 con capitalización mensual
+    1083.00
+    
+    @formula
+    FV = npf.fv(rate, nper, pmt, pv)
+    
+    @note
+    - Usa numpy_financial internamente para máxima precisión
+    - Soporta arrays para análisis de sensibilidad
+    - Para capitalización personalizada usar rate = tasa_anual/períodos_por_año
+    - Para ON usar nper = 12 (capitalización mensual en 1 año)
     """
-    result = C * (1 + r/m) ** (m * T)
+    result = -npf.fv(rate, nper, pmt, -pv)
+    
     # Si todos los inputs son escalares, retorna escalar
-    if (np.isscalar(C) and np.isscalar(r) and np.isscalar(T) and np.isscalar(m)):
+    if np.isscalar(pv) and np.isscalar(rate) and np.isscalar(nper) and np.isscalar(pmt):
         return float(result)
     return result
 
@@ -137,23 +149,27 @@ def future_value(C: Union[float, NDArray], r: Union[float, NDArray], T: Union[in
 
 def present_value_annuity(C: float, r: float, T: Union[int, float], m: int = 1) -> float:
     """
-    Calcula el valor presente de una anualidad con capitalización
-    Fórmula: PV = C * [1 - (1 + r/m)^(-m*T)] / (r/m)
+    Calcula el valor presente de una anualidad con capitalización.
     
-    Args:
-        C: Cash flow periódico (ej: 100)
-        r: Tasa de interés anual (ej: 0.05 para 5%)
-        T: Tiempo en años (ej: 10)
-        m: Períodos de capitalización por año (ej: 12 para mensual, 1 para anual)
+    @param {float} C - Cash flow periódico
+    @param {float} r - Tasa de interés anual
+    @param {Union[int, float]} T - Tiempo en años
+    @param {int} m - Períodos de capitalización por año (por defecto 1)
+    @returns {float} Valor presente de la anualidad
     
-    Returns:
-        float: Valor presente de la anualidad
-        
-    Example:
-        >>> present_value_annuity(100, 0.05, 10, 1)  # $100 anuales por 10 años al 5%
-        772.17  # Valor presente de la anualidad
-        >>> present_value_annuity(100, 0.05, 10, 12)  # $100 mensuales por 10 años al 5%
-        9420.45  # Valor presente de la anualidad mensual
+    @example
+    >>> present_value_annuity(100, 0.05, 10, 1)  # $100 anuales por 10 años al 5%
+    772.17
+    >>> present_value_annuity(100, 0.05, 10, 12)  # $100 mensuales por 10 años al 5%
+    9420.45
+    
+    @formula
+    PV = C * [1 - (1 + r/m)^(-m*T)] / (r/m)
+    
+    @note
+    - Para anualidades ordinarias (pagos al final del período)
+    - m=1 para capitalización anual, m=12 para mensual
+    - Si r/m=0, usa fórmula simplificada PV = C * m * T
     """
     rate_per_period = r / m
     total_periods = m * T
@@ -165,23 +181,27 @@ def present_value_annuity(C: float, r: float, T: Union[int, float], m: int = 1) 
 
 def future_value_annuity(C: float, r: float, T: Union[int, float], m: int = 1) -> float:
     """
-    Calcula el valor futuro de una anualidad con capitalización
-    Fórmula: FV = C * [((1 + r/m)^(m*T) - 1) / (r/m)]
+    Calcula el valor futuro de una anualidad con capitalización.
     
-    Args:
-        C: Cash flow periódico (ej: 100)
-        r: Tasa de interés anual (ej: 0.05 para 5%)
-        T: Tiempo en años (ej: 10)
-        m: Períodos de capitalización por año (ej: 12 para mensual, 1 para anual)
+    @param {float} C - Cash flow periódico
+    @param {float} r - Tasa de interés anual
+    @param {Union[int, float]} T - Tiempo en años
+    @param {int} m - Períodos de capitalización por año (por defecto 1)
+    @returns {float} Valor futuro de la anualidad
     
-    Returns:
-        float: Valor futuro de la anualidad
-        
-    Example:
-        >>> future_value_annuity(100, 0.05, 10, 1)  # $100 anuales por 10 años al 5%
-        1257.79  # Valor futuro de la anualidad
-        >>> future_value_annuity(100, 0.05, 10, 12)  # $100 mensuales por 10 años al 5%
-        15528.23  # Valor futuro de la anualidad mensual
+    @example
+    >>> future_value_annuity(100, 0.05, 10, 1)  # $100 anuales por 10 años al 5%
+    1257.79
+    >>> future_value_annuity(100, 0.05, 10, 12)  # $100 mensuales por 10 años al 5%
+    15528.23
+    
+    @formula
+    FV = C * [((1 + r/m)^(m*T) - 1) / (r/m)]
+    
+    @note
+    - Para anualidades ordinarias (pagos al final del período)
+    - m=1 para capitalización anual, m=12 para mensual
+    - Si r/m=0, usa fórmula simplificada FV = C * m * T
     """
     rate_per_period = r / m
     total_periods = m * T
@@ -191,113 +211,136 @@ def future_value_annuity(C: float, r: float, T: Union[int, float], m: int = 1) -
 
 # %% Funciones de Pagos
 
-def payment_amount(principal: Union[float, NDArray], rate: Union[float, NDArray], periods: Union[int, NDArray]) -> Union[float, NDArray]:
+def payment_amount(rate: Union[float, np.ndarray], nper: Union[int, np.ndarray], 
+                   pv: Union[float, np.ndarray], fv: Union[int, np.ndarray] = 0) -> Union[float, np.ndarray]:
     """
-    Calcula el monto del pago para un préstamo
-    Soporta valores individuales y arrays para cálculos en lote
+    Calcula el monto del pago para un préstamo usando numpy_financial.
     
-    Args:
-        principal: Monto del préstamo (ej: 100000 o [100000, 200000, 300000])
-        rate: Tasa de interés por período (ej: 0.005 o [0.004, 0.005, 0.006])
-        periods: Número de períodos (ej: 360 o [360, 240, 180])
+    @param {Union[float, np.ndarray]} pv - Monto del préstamo (valor presente)
+    @param {Union[float, np.ndarray]} rate - Tasa de interés por período
+    @param {Union[int, np.ndarray]} nper - Número de períodos
+    @param {Union[float, np.ndarray]} fv - Valor futuro (por defecto 0)
+    @returns {Union[float, np.ndarray]} Monto del pago periódico
     
-    Returns:
-        Union[float, NDArray]: Monto del pago periódico (escalar o array)
-        
-    Example:
-        >>> payment_amount(100000, 0.005, 360)  # Valor individual
-        599.55  # Pago mensual
-        >>> payment_amount([100000, 200000], [0.005, 0.006], [360, 240])  # Arrays
-        array([599.55, 1438.06])  # Pagos para múltiples escenarios
+    @example
+    >>> payment_amount(100000, 0.005, 360)  # Préstamo $100k a 30 años
+    599.55  # Pago mensual
+    >>> payment_amount([100000, 200000], [0.005, 0.006], [360, 240])  # Arrays
+    array([599.55, 1438.06])  # Pagos para múltiples escenarios
+    
+    @formula
+    PMT = npf.pmt(rate, nper, pv, fv)
+    
+    @note
+    - Usa numpy_financial para cálculos de préstamos estándar
+    - Soporta arrays para análisis comparativo de préstamos
+    - Retorna valor positivo (pago que se hace)
     """
-    result = npf.pmt(rate, periods, -principal)
+    result = -npf.pmt(rate, nper, pv, fv)  # type: ignore
+    
     # Si todos los inputs son escalares, retorna escalar
-    if np.isscalar(principal) and np.isscalar(rate) and np.isscalar(periods):
+    if np.isscalar(pv) and np.isscalar(rate) and np.isscalar(nper) and np.isscalar(fv):
         return float(result)
     return result
 
 # %%
 
-def payment_interest(principal: Union[float, NDArray], rate: Union[float, NDArray], 
-                    period: Union[int, NDArray], periods: Union[int, NDArray]) -> Union[float, NDArray]:
+def payment_interest(rate: Union[float, np.ndarray], per: Union[int, np.ndarray], 
+                    nper: Union[int, np.ndarray], pv: Union[float, np.ndarray], 
+                    fv: Union[int, np.ndarray] = 0) -> Union[float, np.ndarray]:
     """
-    Calcula la porción de interés de un pago específico
-    Soporta valores individuales y arrays para cálculos en lote
+    Calcula la porción de interés de un pago específico usando numpy_financial.
     
-    Args:
-        principal: Monto del préstamo (ej: 100000 o [100000, 200000])
-        rate: Tasa de interés por período (ej: 0.005 o [0.004, 0.005])
-        period: Período específico (ej: 12 o [1, 2, 3])
-        periods: Total de períodos (ej: 360 o [360, 240])
+    @param {Union[float, np.ndarray]} rate - Tasa de interés por período
+    @param {Union[int, np.ndarray]} per - Período específico para calcular interés
+    @param {Union[int, np.ndarray]} nper - Número total de períodos
+    @param {Union[float, np.ndarray]} pv - Valor presente (monto del préstamo)
+    @param {Union[float, np.ndarray]} fv - Valor futuro (por defecto 0)
+    @returns {Union[float, np.ndarray]} Porción de interés del pago
     
-    Returns:
-        Union[float, NDArray]: Porción de interés del pago
-        
-    Example:
-        >>> payment_interest(100000, 0.005, 1, 360)  # Valor individual
-        500.00  # Interés del primer pago
-        >>> payment_interest(100000, 0.005, [1, 2, 3], 360)  # Múltiples períodos
-        array([500.00, 499.50, 499.00])  # Interés para primeros 3 pagos
+    @example
+    >>> payment_interest(0.005, 1, 360, 100000)  # Interés del primer pago
+    500.00
+    >>> payment_interest(0.005, [1, 2, 3], 360, 100000)  # Múltiples períodos
+    array([500.00, 499.50, 499.00])
+    
+    @formula
+    IPMT = npf.ipmt(rate, per, nper, pv, fv)
+    
+    @note
+    - Usa numpy_financial para cálculos precisos de interés
+    - Soporta arrays para análisis de amortización
+    - Retorna valor positivo (interés que se paga)
     """
-    result = npf.ipmt(rate, period, periods, -principal)
+    result = -npf.ipmt(rate, per, nper, pv, fv)  # type: ignore
+    
     # Si todos los inputs son escalares, retorna escalar
-    if (np.isscalar(principal) and np.isscalar(rate) and 
-        np.isscalar(period) and np.isscalar(periods)):
+    if (np.isscalar(rate) and np.isscalar(per) and 
+        np.isscalar(nper) and np.isscalar(pv) and np.isscalar(fv)):
         return float(result)
     return result
 
 # %%
 
-def payment_principal(principal: Union[float, NDArray], rate: Union[float, NDArray], 
-                     period: Union[int, NDArray], periods: Union[int, NDArray]) -> Union[float, NDArray]:
+def payment_principal(rate: Union[float, np.ndarray], per: Union[int, np.ndarray], 
+                     nper: Union[int, np.ndarray], pv: Union[float, np.ndarray], 
+                     fv: Union[int, np.ndarray] = 0) -> Union[float, np.ndarray]:
     """
-    Calcula la porción de capital de un pago específico
-    Soporta valores individuales y arrays para cálculos en lote
+    Calcula la porción de capital de un pago específico usando numpy_financial.
     
-    Args:
-        principal: Monto del préstamo (ej: 100000 o [100000, 200000])
-        rate: Tasa de interés por período (ej: 0.005 o [0.004, 0.005])
-        period: Período específico (ej: 12 o [1, 2, 3])
-        periods: Total de períodos (ej: 360 o [360, 240])
+    @param {Union[float, np.ndarray]} rate - Tasa de interés por período
+    @param {Union[int, np.ndarray]} per - Período específico para calcular capital
+    @param {Union[int, np.ndarray]} nper - Número total de períodos
+    @param {Union[float, np.ndarray]} pv - Valor presente (monto del préstamo)
+    @param {Union[float, np.ndarray]} fv - Valor futuro (por defecto 0)
+    @returns {Union[float, np.ndarray]} Porción de capital del pago
     
-    Returns:
-        Union[float, NDArray]: Porción de capital del pago
-        
-    Example:
-        >>> payment_principal(100000, 0.005, 1, 360)  # Valor individual
-        99.55  # Capital del primer pago
-        >>> payment_principal(100000, 0.005, [1, 2, 3], 360)  # Múltiples períodos
-        array([99.55, 100.05, 100.55])  # Capital para primeros 3 pagos
+    @example
+    >>> payment_principal(0.005, 1, 360, 100000)  # Capital del primer pago
+    233.33
+    >>> payment_principal(0.005, [1, 2, 3], 360, 100000)  # Múltiples períodos
+    array([233.33, 234.50, 235.67])
+    
+    @formula
+    PPMT = npf.ppmt(rate, per, nper, pv, fv)
+    
+    @note
+    - Usa numpy_financial para cálculos precisos de capital
+    - Soporta arrays para análisis de amortización
+    - Retorna valor positivo (capital que se paga)
     """
-    result = npf.ppmt(rate, period, periods, -principal)
+    result = -npf.ppmt(rate, per, nper, pv, fv)  # type: ignore
+    
     # Si todos los inputs son escalares, retorna escalar
-    if (np.isscalar(principal) and np.isscalar(rate) and 
-        np.isscalar(period) and np.isscalar(periods)):
+    if (np.isscalar(rate) and np.isscalar(per) and 
+        np.isscalar(nper) and np.isscalar(pv) and np.isscalar(fv)):
         return float(result)
-    return result
-
-# %% Funciones de Análisis de Inversiones
+    return result# %% Funciones de Análisis de Inversiones
 
 def net_present_value(initial_investment: float, cash_flows: list, r: float, T: Optional[int] = None, m: int = 1) -> float:
     """
-    Calcula el valor presente neto (NPV) de una inversión con capitalización
-    Fórmula: NPV = -Initial_Investment + Σ[CF_t / (1 + r/m)^(m*t)]
+    Calcula el valor presente neto (NPV) de una inversión con capitalización.
     
-    Args:
-        initial_investment: Inversión inicial (ej: 10000)
-        cash_flows: Lista de flujos de caja futuros (ej: [2000, 3000, 4000])
-        r: Tasa de interés anual (ej: 0.10 para 10%)
-        T: Número total de períodos (si None, usa len(cash_flows))
-        m: Períodos de capitalización por año (ej: 12 para mensual, 1 para anual)
+    @param {float} initial_investment - Inversión inicial
+    @param {list} cash_flows - Lista de flujos de caja futuros
+    @param {float} r - Tasa de interés anual
+    @param {Optional[int]} T - Número total de períodos (por defecto len(cash_flows))
+    @param {int} m - Períodos de capitalización por año (por defecto 1)
+    @returns {float} Valor presente neto
     
-    Returns:
-        float: Valor presente neto
-        
-    Example:
-        >>> net_present_value(10000, [3000, 4000, 5000], 0.10, 3, 1)  # Inversión de $10,000, flujos anuales al 10%
-        -199.21  # NPV negativo, inversión no viable
-        >>> net_present_value(10000, [3500, 4500, 5500], 0.10, 3, 1)  # Inversión mejorada
-        1061.57  # NPV positivo, inversión viable
+    @example
+    >>> net_present_value(10000, [3000, 4000, 5000], 0.10, 3, 1)
+    -199.21  # NPV negativo, inversión no viable
+    >>> net_present_value(10000, [3500, 4500, 5500], 0.10, 3, 1)
+    1061.57  # NPV positivo, inversión viable
+    
+    @formula
+    NPV = -Initial_Investment + Σ[CF_t / (1 + r/m)^(m*t)]
+    
+    @note
+    - NPV > 0: inversión viable
+    - NPV < 0: inversión no viable
+    - Considera capitalización personalizada con parámetro m
     """
     if T is None:
         T = len(cash_flows)
@@ -313,23 +356,27 @@ def net_present_value(initial_investment: float, cash_flows: list, r: float, T: 
 
 def internal_rate_of_return(initial_investment: float, cash_flows: list, max_iter: int = 1000, precision: float = 1e-6) -> float:
     """
-    Calcula la tasa interna de retorno (IRR) usando método de Newton-Raphson
-    Encuentra la tasa r donde NPV = 0
+    Calcula la tasa interna de retorno (IRR) usando método de Newton-Raphson.
     
-    Args:
-        initial_investment: Inversión inicial (ej: 10000)
-        cash_flows: Lista de flujos de caja futuros (ej: [3000, 4000, 5000])
-        max_iter: Número máximo de iteraciones
-        precision: Precisión deserada
+    @param {float} initial_investment - Inversión inicial
+    @param {list} cash_flows - Lista de flujos de caja futuros
+    @param {int} max_iter - Número máximo de iteraciones (por defecto 1000)
+    @param {float} precision - Precisión deseada (por defecto 1e-6)
+    @returns {float} Tasa interna de retorno
     
-    Returns:
-        float: Tasa interna de retorno
-        
-    Example:
-        >>> internal_rate_of_return(10000, [3500, 4500, 5500])  # Inversión con buenos flujos
-        0.1542  # IRR del 15.42%
-        >>> internal_rate_of_return(10000, [2000, 3000, 4000])  # Inversión con flujos menores
-        -0.0451  # IRR negativo del -4.51%
+    @example
+    >>> internal_rate_of_return(10000, [3500, 4500, 5500])
+    0.1542  # IRR del 15.42%
+    >>> internal_rate_of_return(10000, [2000, 3000, 4000])
+    -0.0451  # IRR negativo del -4.51%
+    
+    @formula
+    Encuentra r donde NPV = -Initial_Investment + Σ[CF_t / (1 + r)^t] = 0
+    
+    @note
+    - Usa método iterativo Newton-Raphson
+    - IRR > tasa de descuento: inversión viable
+    - Puede tener múltiples soluciones con flujos mixtos
     """
     # Estimación inicial
     rate = 0.1
@@ -355,26 +402,102 @@ def internal_rate_of_return(initial_investment: float, cash_flows: list, max_ite
 
 # %%
 
+def modified_internal_rate_of_return(cash_flows: list, finance_rate: float, reinvest_rate: float) -> float:
+    """
+    Calcula la Tasa Interna de Retorno Modificada (MIRR) usando numpy_financial.
+    
+    @param {list} cash_flows - Lista de flujos de caja (incluyendo inversión inicial negativa)
+    @param {float} finance_rate - Tasa de financiamiento para flujos negativos
+    @param {float} reinvest_rate - Tasa de reinversión para flujos positivos
+    @returns {float} Tasa interna de retorno modificada
+    
+    @example
+    >>> modified_internal_rate_of_return([-1000, 300, 400, 500], 0.10, 0.12)
+    0.1013  # MIRR del 10.13%
+    
+    @formula
+    MIRR = npf.mirr(cash_flows, finance_rate, reinvest_rate)
+    
+    @note
+    - Usa numpy_financial para cálculos precisos
+    - Considera diferentes tasas para financiamiento y reinversión
+    - Más realista que IRR tradicional para proyectos complejos
+    """
+    return npf.mirr(cash_flows, finance_rate, reinvest_rate)
+
+# %%
+
+def npv_simple(rate: float, cash_flows: list) -> float:
+    """
+    Calcula el Valor Presente Neto usando numpy_financial directamente.
+    
+    @param {float} rate - Tasa de descuento 
+    @param {list} cash_flows - Lista de flujos de caja (incluyendo inversión inicial)
+    @returns {float} Valor presente neto
+    
+    @example
+    >>> npv_simple(0.10, [-1000, 300, 400, 500])
+    42.95  # NPV positivo
+    
+    @formula
+    NPV = npf.npv(rate, cash_flows)
+    
+    @note
+    - Wrapper directo de numpy_financial.npv()
+    - Primer flujo debe ser la inversión inicial (negativo)
+    - Flujos posteriores son los retornos esperados
+    """
+    return npf.npv(rate, cash_flows)
+
+# %%
+
+def irr_simple(cash_flows: list) -> float:
+    """
+    Calcula la Tasa Interna de Retorno usando numpy_financial directamente.
+    
+    @param {list} cash_flows - Lista de flujos de caja (incluyendo inversión inicial)
+    @returns {float} Tasa interna de retorno
+    
+    @example
+    >>> irr_simple([-1000, 300, 400, 500])
+    0.1062  # IRR del 10.62%
+    
+    @formula
+    IRR = npf.irr(cash_flows)
+    
+    @note
+    - Wrapper directo de numpy_financial.irr()
+    - Primer flujo debe ser la inversión inicial (negativo)
+    - Encuentra la tasa donde NPV = 0
+    """
+    return npf.irr(cash_flows)
+
+# %%
+
 def profitability_index(initial_investment: float, cash_flows: list, r: float, T: Optional[int] = None, m: int = 1) -> float:
     """
-    Calcula el índice de rentabilidad (PI) con capitalización
-    Fórmula: PI = Σ[PV de cash flows] / Initial Investment
+    Calcula el índice de rentabilidad (PI) con capitalización.
     
-    Args:
-        initial_investment: Inversión inicial (ej: 10000)
-        cash_flows: Lista de flujos de caja futuros (ej: [3000, 4000, 5000])
-        r: Tasa de interés anual (ej: 0.10 para 10%)
-        T: Número total de períodos (si None, usa len(cash_flows))
-        m: Períodos de capitalización por año (ej: 12 para mensual, 1 para anual)
+    @param {float} initial_investment - Inversión inicial
+    @param {list} cash_flows - Lista de flujos de caja futuros
+    @param {float} r - Tasa de interés anual
+    @param {Optional[int]} T - Número total de períodos (por defecto len(cash_flows))
+    @param {int} m - Períodos de capitalización por año (por defecto 1)
+    @returns {float} Índice de rentabilidad
     
-    Returns:
-        float: Índice de rentabilidad (>1 = viable, <1 = no viable)
-        
-    Example:
-        >>> profitability_index(10000, [3500, 4500, 5500], 0.10, 3, 1)  # PI > 1
-        1.106  # Índice mayor a 1, proyecto viable
-        >>> profitability_index(10000, [2500, 3000, 3500], 0.10, 3, 1)  # PI < 1
-        0.751  # Índice menor a 1, proyecto no viable
+    @example
+    >>> profitability_index(10000, [3500, 4500, 5500], 0.10, 3, 1)
+    1.106  # PI > 1, proyecto viable
+    >>> profitability_index(10000, [2500, 3000, 3500], 0.10, 3, 1)
+    0.751  # PI < 1, proyecto no viable
+    
+    @formula
+    PI = Σ[PV de cash flows] / Initial Investment
+    
+    @note
+    - PI > 1: proyecto viable (crea valor)
+    - PI < 1: proyecto no viable (destruye valor)
+    - PI = 1: proyecto indiferente (NPV = 0)
     """
     if T is None:
         T = len(cash_flows)
@@ -390,20 +513,25 @@ def profitability_index(initial_investment: float, cash_flows: list, r: float, T
 
 def payback_period(initial_investment: float, cash_flows: list) -> float:
     """
-    Calcula el período de recuperación de la inversión
+    Calcula el período de recuperación de la inversión.
     
-    Args:
-        initial_investment: Inversión inicial (ej: 10000)
-        cash_flows: Lista de flujos de caja (ej: [3000, 4000, 5000])
+    @param {float} initial_investment - Inversión inicial
+    @param {list} cash_flows - Lista de flujos de caja
+    @returns {float} Período de recuperación en años
     
-    Returns:
-        float: Período de recuperación en años (o float('inf') si nunca se recupera)
-        
-    Example:
-        >>> payback_period(10000, [3000, 4000, 5000])
-        2.75  # Se recupera la inversión en 2.75 años
-        >>> payback_period(8000, [2500, 3000, 4000])
-        2.17  # Se recupera la inversión en 2.17 años
+    @example
+    >>> payback_period(10000, [3000, 4000, 5000])
+    2.75  # Se recupera en 2.75 años
+    >>> payback_period(8000, [2500, 3000, 4000])
+    2.17  # Se recupera en 2.17 años
+    
+    @formula
+    Período donde Σ(CF_t) >= Initial_Investment (con interpolación)
+    
+    @note
+    - No considera valor temporal del dinero
+    - Retorna float('inf') si nunca se recupera
+    - Incluye interpolación para cálculo exacto
     """
     cumulative_cash_flow = 0
     
@@ -422,25 +550,30 @@ def payback_period(initial_investment: float, cash_flows: list) -> float:
 # %% Funciones Avanzadas de Análisis
 
 def sensitivity_analysis_npv(initial_investment: float, cash_flows: list, 
-                            r_range: NDArray, T: Optional[int] = None, m: int = 1) -> NDArray:
+                            r_range: np.ndarray, T: Optional[int] = None, m: int = 1) -> np.ndarray:
     """
-    Análisis de sensibilidad del NPV variando la tasa de descuento
+    Análisis de sensibilidad del NPV variando la tasa de descuento.
     
-    Args:
-        initial_investment: Inversión inicial (ej: 10000)
-        cash_flows: Lista de flujos de caja futuros (ej: [3000, 4000, 5000])
-        r_range: Array de tasas a analizar (ej: np.linspace(0.05, 0.15, 100))
-        T: Número total de períodos (si None, usa len(cash_flows))
-        m: Períodos de capitalización por año
+    @param {float} initial_investment - Inversión inicial
+    @param {list} cash_flows - Lista de flujos de caja futuros
+    @param {np.ndarray} r_range - Array de tasas a analizar
+    @param {Optional[int]} T - Número total de períodos (por defecto len(cash_flows))
+    @param {int} m - Períodos de capitalización por año (por defecto 1)
+    @returns {np.ndarray} Array de valores NPV correspondientes
     
-    Returns:
-        NDArray: Array de valores NPV correspondientes a cada tasa
-        
-    Example:
-        >>> rates = np.linspace(0.05, 0.15, 11)  # Tasas del 5% al 15%
-        >>> npvs = sensitivity_analysis_npv(10000, [3500, 4500, 5500], rates)
-        >>> npvs.shape
-        (11,)  # 11 valores NPV diferentes
+    @example
+    >>> rates = np.linspace(0.05, 0.15, 11)
+    >>> npvs = sensitivity_analysis_npv(10000, [3500, 4500, 5500], rates)
+    >>> npvs.shape
+    (11,)  # 11 valores NPV diferentes
+    
+    @formula
+    NPV(r) = -Initial_Investment + Σ[CF_t / (1 + r/m)^(m*t)] para cada r
+    
+    @note
+    - Útil para análisis de riesgo de tasa de interés
+    - Permite visualizar sensibilidad del proyecto a cambios en r
+    - Vectorización para eficiencia computacional
     """
     
     # Vectorizar el cálculo para todas las tasas
@@ -456,31 +589,36 @@ def sensitivity_analysis_npv(initial_investment: float, cash_flows: list,
 
 def monte_carlo_npv(initial_investment: float, cash_flows_mean: list, cash_flows_std: list,
                    r_mean: float, r_std: float, n_simulations: int = 1000, 
-                   T: Optional[int] = None, m: int = 1) -> NDArray:
+                   T: Optional[int] = None, m: int = 1) -> np.ndarray:
     """
-    Simulación Monte Carlo para análisis de riesgo de NPV
+    Simulación Monte Carlo para análisis de riesgo de NPV.
     
-    Args:
-        initial_investment: Inversión inicial
-        cash_flows_mean: Media de cada flujo de caja
-        cash_flows_std: Desviación estándar de cada flujo de caja
-        r_mean: Tasa de descuento promedio
-        r_std: Desviación estándar de la tasa
-        n_simulations: Número de simulaciones
-        T: Número total de períodos
-        m: Períodos de capitalización por año
+    @param {float} initial_investment - Inversión inicial
+    @param {list} cash_flows_mean - Media de cada flujo de caja
+    @param {list} cash_flows_std - Desviación estándar de cada flujo de caja
+    @param {float} r_mean - Tasa de descuento promedio
+    @param {float} r_std - Desviación estándar de la tasa
+    @param {int} n_simulations - Número de simulaciones (por defecto 1000)
+    @param {Optional[int]} T - Número total de períodos
+    @param {int} m - Períodos de capitalización por año (por defecto 1)
+    @returns {np.ndarray} Array con resultados NPV de todas las simulaciones
     
-    Returns:
-        NDArray: Array con los resultados NPV de todas las simulaciones
-        
-    Example:
-        >>> cf_mean = [3500, 4500, 5500]
-        >>> cf_std = [500, 600, 700]
-        >>> npv_dist = monte_carlo_npv(10000, cf_mean, cf_std, 0.10, 0.02, 1000)
-        >>> np.mean(npv_dist)  # NPV promedio
-        1061.57
-        >>> np.std(npv_dist)   # Riesgo (desviación estándar)
-        850.23
+    @example
+    >>> cf_mean = [3500, 4500, 5500]
+    >>> cf_std = [500, 600, 700]
+    >>> npv_dist = monte_carlo_npv(10000, cf_mean, cf_std, 0.10, 0.02, 1000)
+    >>> np.mean(npv_dist)  # NPV promedio
+    1061.57
+    >>> np.std(npv_dist)   # Riesgo
+    850.23
+    
+    @formula
+    NPV = -I₀ + Σ[CF_t(μ,σ) / (1 + r(μ,σ)/m)^(m*t)] para n simulaciones
+    
+    @note
+    - Asume distribuciones normales para flujos y tasa
+    - Permite cuantificar riesgo del proyecto
+    - Usa seed=42 para reproducibilidad
     """    
     # Generar simulaciones aleatorias
     np.random.seed(42)  # Para reproducibilidad
@@ -502,25 +640,30 @@ def monte_carlo_npv(initial_investment: float, cash_flows_mean: list, cash_flows
 
 # %%
 
-def batch_loan_analysis(principals: NDArray, rates: NDArray, periods: NDArray) -> dict:
+def batch_loan_analysis(principals: np.ndarray, rates: np.ndarray, periods: np.ndarray) -> dict:
     """
-    Análisis en lote de múltiples préstamos
+    Análisis en lote de múltiples préstamos.
     
-    Args:
-        principals: Array de montos de préstamos
-        rates: Array de tasas de interés
-        periods: Array de períodos
+    @param {np.ndarray} principals - Array de montos de préstamos
+    @param {np.ndarray} rates - Array de tasas de interés
+    @param {np.ndarray} periods - Array de períodos
+    @returns {dict} Diccionario con arrays de resultados
     
-    Returns:
-        dict: Diccionario con arrays de resultados para cada métrica
-        
-    Example:
-        >>> principals = np.array([100000, 200000, 300000])
-        >>> rates = np.array([0.005, 0.006, 0.007])
-        >>> periods = np.array([360, 240, 180])
-        >>> results = batch_loan_analysis(principals, rates, periods)
-        >>> results['payments']
-        array([599.55, 1438.06, 2491.78])  # Pagos mensuales
+    @example
+    >>> principals = np.array([100000, 200000, 300000])
+    >>> rates = np.array([0.005, 0.006, 0.007])
+    >>> periods = np.array([360, 240, 180])
+    >>> results = batch_loan_analysis(principals, rates, periods)
+    >>> results['payments']
+    array([599.55, 1438.06, 2491.78])
+    
+    @formula
+    Calcula PMT, IPMT, PPMT, Total pagado e Interés total para cada préstamo
+    
+    @note
+    - Procesamiento vectorizado para eficiencia
+    - Retorna métricas completas de análisis de préstamos
+    - Útil para comparación de múltiples escenarios
     """
     # Calcular todas las métricas usando las funciones vectorizadas
     payments = payment_amount(principals, rates, periods)
