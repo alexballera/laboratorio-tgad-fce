@@ -26,6 +26,18 @@ pulp==2.8.0
 # Para visualizaciones más avanzadas
 plotly==6.3.0
 
+# Para nubes de palabras (wordcloud)
+wordcloud==1.9.3
+
+# Para dashboards interactivos y aplicaciones web
+panel==1.5.4
+
+# Para gráficos financieros especializados
+mplfinance==0.12.10b0
+
+# Para widgets interactivos en Jupyter
+jupyter-bokeh==4.0.5
+
 # Para manejo de archivos Excel
 openpyxl==3.1.5
 xlrd==2.0.2
