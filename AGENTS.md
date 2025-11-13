@@ -21,7 +21,7 @@
 
 ## Contexto del Proyecto
 
-Este es un repositorio **académico oficial** para la materia "Taller de Gestión y Análisis de Datos" (TGAD) de la FCE-UBA. El foco está en la **aplicación práctica** de herramientas de manipulación, análisis y visualización de datos para resolver problemas económicos y de negocio, utilizando Python y Jupyter notebooks.
+Este es un repositorio **académico oficial** para la "Tecnicatura de Gestión y Análisis de Datos" (TGAD) de la FCE-UBA. El foco está en la **aplicación práctica** de herramientas de manipulación, análisis y visualización de datos para resolver problemas económicos y de negocio, utilizando Python y Jupyter notebooks.
 
 **Características distintivas del contexto académico:**
 
