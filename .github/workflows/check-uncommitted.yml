@@ -16,6 +16,9 @@ jobs:
     name: Verificar cambios sin commitear
     runs-on: ubuntu-latest
     
+    permissions:
+      contents: read  # Solo necesita leer el código del repositorio
+    
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
