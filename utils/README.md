@@ -21,6 +21,13 @@ Este script ayuda a prevenir la pérdida de trabajo local al detectar cambios si
 
 #### 📖 Uso
 
+##### Verificación rápida (recomendada)
+```bash
+python utils/pre_cloud_check.py
+```
+
+Este comando ejecuta todas las verificaciones necesarias antes de operaciones en la nube.
+
 ##### Uso básico (sin archivos no rastreados)
 ```bash
 python utils/check_uncommitted_changes.py
