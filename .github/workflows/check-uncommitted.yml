@@ -1,0 +1,46 @@
+name: Check Uncommitted Changes
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  check-uncommitted:
+    name: Verificar cambios sin commitear
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Necesario para verificar el historial completo
+      
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Verificar cambios sin commitear
+        run: |
+          echo "🔍 Verificando cambios sin commitear en el repositorio..."
+          python utils/check_uncommitted_changes.py
+          
+          if [ $? -eq 0 ]; then
+            echo "✅ No se detectaron cambios sin commitear"
+          else
+            echo "❌ Se detectaron cambios sin commitear"
+            echo "   Asegúrate de commitear todos los cambios antes de hacer push"
+            exit 1
+          fi
+      
+      - name: Ejecutar tests del verificador
+        run: |
+          echo "🧪 Ejecutando tests del verificador de cambios..."
+          python -m unittest utils/test_check_uncommitted_changes.py -v
