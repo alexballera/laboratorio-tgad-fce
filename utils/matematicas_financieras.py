@@ -1014,7 +1014,7 @@ def ejemplo_monte_carlo_completo():
     cash_flows = [-500000, 180000, 220000, 280000]
     
     print(f"• Inversión Inicial: ${abs(cash_flows[0]):,}")
-    print(f"• Flujos Esperados:")
+    print("• Flujos Esperados:")
     for i, flujo in enumerate(cash_flows[1:], 1):
         print(f"  - Año {i}: ${flujo:,}")
     
